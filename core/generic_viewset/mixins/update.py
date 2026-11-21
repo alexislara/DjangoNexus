@@ -7,10 +7,12 @@ class UpdateServicesMixin(BaseMixin):
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         partial = kwargs.pop("partial", False)
-        serializer = self.serializer_data(request.data, instance, partial)
+        serializer = self.serializer_instance(request.data, instance, partial)
         service = self.get_service_class(
             user=request.user,
-            action=self.action
+            action="update",
+            instance=instance,
+            model=self.get_model(),
         )
 
         service.action_controller(serializer.validated_data)

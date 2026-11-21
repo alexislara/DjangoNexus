@@ -1,0 +1,78 @@
+services:
+  django:
+    restart: unless-stopped
+    container_name: django-base
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    # Mínimo de producción: 1 GiB de RAM y 1 núcleo, los mismos valores que
+    # usa Cloud Run (--memory=1Gi --cpu=1). Es el suelo con el que la app
+    # tiene que funcionar; por debajo, el contenedor muere por OOM.
+    mem_limit: 1g
+    cpus: "1.0"
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - db
+    environment:
+      # Django
+      - DJANGO_SECRET_KEY
+      - DJANGO_SETTINGS_MODULE
+      - DJANGO_ENV
+      - DJANGO_DEBUG=False
+      - DJANGO_PERMISSION_ENABLED
+      - DJANGO_OAUTH2_CLIENT_ID
+      - DJANGO_OAUTH2_CLIENT_SECRET
+      - DJANGO_OAUTH2_URL
+      - OIDC_ISS_ENDPOINT
+      # postgres SQL
+      - POSTGRES_HOST
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      # minio
+      - MINIO_STORAGE_ENDPOINT
+      - MINIO_STORAGE_ACCESS_KEY
+      - MINIO_STORAGE_SECRET_KEY
+      - MINIO_STORAGE_BUCKET_NAME
+      - MINIO_STORAGE_PROXY_URL
+      - STATICFILES_STORAGE
+      - DEFAULT_FILE_STORAGE
+      # mailhog
+      - EMAIL_HOST_USER
+      - EMAIL_HOST_PASSWORD
+      - EMAIL_HOST
+      - EMAIL_PORT
+      - EMAIL_USE_TLS
+      - EMAIL_FROM
+      - EMAIL_BACKEND
+      # Rabbit MQ
+      - RABBITMQ_DEFAULT_VHOST
+      - RABBITMQ_DEFAULT_USER
+      - RABBITMQ_DEFAULT_PASS
+      - RABBITMQ_DEFAULT_PORT
+      # frontend
+      - FRONTEND_URL
+      - WORKER_MQ_URL
+      - RUN_COLLECTSTATIC=false
+    networks:
+      - reverse-proxy-net
+
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    container_name: db-base
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    networks:
+      - reverse-proxy-net
+
+
+networks:
+  reverse-proxy-net:
+    external: true

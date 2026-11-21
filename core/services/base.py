@@ -5,6 +5,10 @@ from django.contrib.auth.models import AbstractBaseUser
 from django.db import transaction
 from django.db.models import Model
 
+from core.save.handled import SaveHandled
+
+save_handler = SaveHandled()
+
 
 class ServiceBase(Protocol):
     @abstractmethod
@@ -15,14 +19,20 @@ class ServiceBase(Protocol):
     def update(self, validated_data: dict) -> dict:
         pass
 
-    def save(self):
-        pass
-
 
 class Service(ServiceBase):
-    def __init__(self, user: AbstractBaseUser, instance: Model, action: str) -> None:
+    def __init__(
+        self, user: AbstractBaseUser, instance: Model, action: str, model: type[Model]
+    ) -> None:
         self.user = user
         self.action = action
+        self.instance = instance
+        self.model_class = model
+        self._save_handler = save_handler
+
+    @property
+    def handler(self) -> SaveHandled:
+        return self._save_handler
 
     @transaction.atomic
     def action_controller(self, validated_data):
@@ -32,7 +42,13 @@ class Service(ServiceBase):
 
 class ServiceGenerics(Service):
     def create(self, validated_data):
-        return super().create(validated_data)
+        self.handler.save(self.model_class, validated_data)
+        return validated_data
 
-    def update(self, validated_data: dict):
-        return super().update(validated_data)
+    def update(self, validated_data):
+        self.handler.save(
+            self.model_class,
+            validated_data,
+            instance=self.instance,
+        )
+        return validated_data

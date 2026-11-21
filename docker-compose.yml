@@ -1,0 +1,22 @@
+services:
+  django:
+    extends:
+      file: docker-compose.base.yml
+      service: django
+    # build:
+    #   target: production
+      
+    ports:
+      - "8000:8000"
+
+  db:
+    extends:
+      file: docker-compose.base.yml
+      service: db
+
+volumes:
+  postgres_data:
+
+networks:
+  reverse-proxy-net:
+    external: true
