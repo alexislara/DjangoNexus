@@ -1,37 +1,33 @@
 import traceback
 
-from django.db.models import Model
 from rest_framework.utils import model_meta
 
 
 class Save:
-    model_class: type[Model]
-
-    def __init__(self) -> None:
-        self.many_to_many = {}
-
-    def set_many_to_many_fields(self, validated_data, model):
+    def get_many_to_many_fields(self, validated_data, model):
         info = model_meta.get_field_info(model)
+        many_to_many = {}
         # Remove many-to-many relationships from validated_data.
         # They are not valid arguments to the default `.create()` method,
         # as they require that the model has already been saved.
 
         for field_name, relation_info in info.relations.items():
             if relation_info.to_many and (field_name in validated_data):
-                self.many_to_many[field_name] = validated_data.pop(field_name)
+                many_to_many[field_name] = validated_data.pop(field_name)
 
-    def save_many_to_many(self, model):
+        return many_to_many
+
+    def save_many_to_many(self, model, many_to_many):
         # Save many-to-many relationships after the model is created or update.
-        if self.many_to_many:
-            for field_name, value in self.many_to_many.items():
+        if many_to_many:
+            for field_name, value in many_to_many.items():
                 field = getattr(model, field_name)
                 field.set(value)
 
-        self.many_to_many.clear()
         return model
 
     def _create(self, model, validated_data):
-        self.set_many_to_many_fields(validated_data, model)
+        many_to_many = self.get_many_to_many_fields(validated_data, model)
 
         try:
             instance = model._default_manager.create(**validated_data)
@@ -46,7 +42,8 @@ class Save:
                 f"this correctly.\nOriginal exception was:\n {tb}"
             )
             raise TypeError(msg) from err
-        self.save_many_to_many(instance)
+
+        self.save_many_to_many(instance, many_to_many)
         return instance
 
     def _update(self, model, validated_data):
@@ -55,12 +52,12 @@ class Save:
         # relationships as being a special case. During updates we already
         # have an model pk for the relationships to be associated with.
 
-        self.set_many_to_many_fields(validated_data, model)
+        many_to_many = self.get_many_to_many_fields(validated_data, model)
 
         for attr, value in validated_data.items():
             setattr(model, attr, value)
 
         model.save()
-        self.save_many_to_many(model)
+        self.save_many_to_many(model, many_to_many)
 
         return model

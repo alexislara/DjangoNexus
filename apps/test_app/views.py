@@ -20,7 +20,7 @@ class AuthorViewSet(
     UpdateServicesMixin,
 ):
     queryset = Author.objects.all()
-    serializer_class = AuthorSerializer
+    serializer_class_default = AuthorSerializer
     services_class = AuthorService
 
 
@@ -32,5 +32,5 @@ class LibraryViewSet(
     UpdateServicesMixin,
 ):
     queryset = Library.objects.prefetch_related("authors")
-    serializer_class = LibrarySerializer
+    serializer_class_default = LibrarySerializer
     services_class = LibraryService

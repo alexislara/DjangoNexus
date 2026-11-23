@@ -23,8 +23,6 @@ class SingletonMeta(type):
 
 
 class SaveHandled(Save, BulkSave, metaclass=SingletonMeta):
-    model_class: type[Model] | None = None
-
     def dispach(
         self,
         model_class: type[Model],

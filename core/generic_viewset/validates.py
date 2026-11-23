@@ -1,38 +1,45 @@
+import logging
+from typing import Protocol
+
 from core.generic_viewset.exceptions import (
-    SerializerIsNone,
     ServiceIsNone,
 )
 
+logger = logging.getLogger(__name__)
 
-class GenericViewsetServiceAbstract:
+
+class GenericViewsetServiceAbstract(Protocol):
+    queryset = None
     services_class = None
     serializer_class = None
+    serializer_class_default = None
+    serializer_class_object = {}
 
-    def __init__(self) -> None:
-        self.serializer_class_object = {}
 
-
-class Validates(GenericViewsetServiceAbstract):
-    def get_attr_validate(self):
+class ValidatesAtributes(GenericViewsetServiceAbstract):
+    def get_attribute_validate(self):
         # Get validation attributes in viewset and filter attributes start with validation
-        get_attributes_validations = filter(lambda x: x.startswith("validate_"), dir(self))
-        return list(get_attributes_validations)
+        validations = filter(
+            lambda x: x.startswith("validate_"), dir(self)
+        )
+        return list(validations)
 
-    def validate_execute(self):
+    def validations_execute(self):
         # item validation atributes in viewset and execute method validation
-        return [
-            attr
-            for attr in dir(self)
-            if attr.startswith("validate_") and callable(getattr(self, attr)())
-        ]
+        logging.debug("Validations_execute in GenericViewSetServices")
+        validations = self.get_attribute_validate()
+        [getattr(self, validation)() for validation in validations]
 
+    def validate_queryset(self):
+        assert self.queryset is not None, (
+            f"'{self.__class__.__name__}' should either include a `queryset` attribute, "
+            "or override the `get_queryset()` method."
+        )
 
-    def validate_serializer_class(self):
-        if self.serializer_class:
-            raise SerializerIsNone(
-                f"'{self.__class__.__name__}' should either include a `serializer_class` attribute, "
-                "or override the `get_serializer_class()` method."
-            )
+    def validate_serializer_class_default(self):
+        assert (
+            self.serializer_class_default is not None
+        ), f"{self.__class__.__name__}, Attribute expected serializer_class_default is None"
 
     def validate_service_class(self):
         if not self.services_class:
