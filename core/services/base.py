@@ -22,7 +22,11 @@ class ServiceBase(Protocol):
 
 class Service(ServiceBase):
     def __init__(
-        self, user: AbstractBaseUser, instance: Model, action: str, model: type[Model]
+        self,
+        user: AbstractBaseUser | None,
+        instance: Model | None,
+        action: str,
+        model: type[Model],
     ) -> None:
         self.user = user
         self.action = action

@@ -187,6 +187,33 @@ class AuthorService(ServiceGenerics):
         return super().create(validated_data)
 ```
 
+### El service es el lugar del dominio
+
+El service es un objeto normal: no necesita una petición HTTP para ejecutarse
+ni para testearse. Por eso es el lugar natural de la lógica de negocio — y lo
+que `core` agrega es que **toda** la lógica de un recurso queda en un solo
+archivo, en vez de repartida entre el serializer, el viewset y el modelo.
+
+El ejemplo completo está en `apps/test_app/services.py`: normaliza el nombre y
+el email, rechaza los emails duplicados con un 400 (en vez de dejar que la base
+devuelva un 500), deriva un slug único y exige que una biblioteca tenga al
+menos un autor.
+
+```python
+class AuthorService(ServiceGenerics):
+    def create(self, validated_data):
+        data = self._prepare(validated_data, creating=True)
+        instance = self.handler.save(self.model_class, data)
+        reflect(instance, data)          # el payload queda sincronizado con la base
+        return data
+```
+
+> **Nota sobre la respuesta.** `core` arma la respuesta a partir del dict del
+> payload, no desde la instancia. Por eso `reflect()` (en
+> `apps/test_app/services.py`) le devuelve al dict el `id` y los campos
+> derivados: de lo contrario el `POST` respondería sin `id`, mientras que el
+> `PATCH` sí lo traería (ese camino sí serializa desde la instancia).
+
 ---
 
 ## 5. `core/save`
@@ -230,6 +257,8 @@ class AuthorSerializer(serializers.Serializer):
 
 ### 6.2 Definir el servicio
 
+Sin reglas de negocio, el service puede ficar vacío:
+
 ```python
 # apps/test_app/services.py
 from core.services import ServiceGenerics
@@ -238,6 +267,9 @@ from core.services import ServiceGenerics
 class AuthorService(ServiceGenerics):
     pass
 ```
+
+Con reglas, el service es donde va el dominio (ver la sección 4). El ejemplo
+completo está en `apps/test_app/services.py`.
 
 ### 6.3 Definir el viewset
 
@@ -343,6 +375,7 @@ handler.bulk_handled(
 ## 8. Referencias
 
 - `apps/test_app/` — ejemplo completo y funcional de la integración.
+- `apps/test_app/services.py` — las reglas de negocio, en los services.
 - `core/generic_viewset/base.py` — `GenericViewsetService`.
 - `core/generic_viewset/validates.py` — `ValidatesAtributes`.
 - `core/generic_viewset/mixins/` — `BaseMixin`, `CreateServicesMixin`, `UpdateServicesMixin`.
