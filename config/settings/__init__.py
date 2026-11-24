@@ -10,22 +10,49 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def env_bool(name, default=False):
+    """Lee una variable de entorno booleana.
+
+    Acepta "1", "true", "yes" y "on" (case-insensitive) como verdadero.
+    Si la variable no está definida, devuelve `default`.
+    """
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-$=@786n9ilzv9dx&!bwbek2hm_izp!o89*@xbf*0^16@n(cu0t"
+# El valor por defecto es el de desarrollo: en producción DEBE venir de
+# DJANGO_SECRET_KEY (ver .env.example).
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-$=@786n9ilzv9dx&!bwbek2hm_izp!o89*@xbf*0^16@n(cu0t",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env_bool("DJANGO_DEBUG", default=True)
 
-ALLOWED_HOSTS = []
+# Entorno de ejecución (development | staging | production).
+DJANGO_ENV = os.environ.get("DJANGO_ENV", "development")
+
+# Hosts permitidos, separados por coma. Sin DJANGO_ALLOWED_HOSTS queda vacío,
+# lo que Django sólo acepta con DEBUG=True.
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
+    if host.strip()
+]
 
 
 # Application definition

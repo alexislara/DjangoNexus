@@ -21,6 +21,7 @@ services:
       - DJANGO_SETTINGS_MODULE
       - DJANGO_ENV
       - DJANGO_DEBUG=False
+      - DJANGO_ALLOWED_HOSTS
       - DJANGO_PERMISSION_ENABLED
       - DJANGO_OAUTH2_CLIENT_ID
       - DJANGO_OAUTH2_CLIENT_SECRET
@@ -28,6 +29,7 @@ services:
       - OIDC_ISS_ENDPOINT
       # postgres SQL
       - POSTGRES_HOST
+      - POSTGRES_PORT
       - POSTGRES_DB
       - POSTGRES_USER
       - POSTGRES_PASSWORD
@@ -55,7 +57,15 @@ services:
       # frontend
       - FRONTEND_URL
       - WORKER_MQ_URL
-      - RUN_COLLECTSTATIC=false
+      # bootstrap
+      - DJANGO_ADMIN_EMAIL
+      - DJANGO_ADMIN_PASSWORD
+      - RUN_COLLECTSTATIC
+      - RUN_MIGRATIONS
+      - RUN_OIDC_KEYGEN
+      - RUN_FIXTURES
+      - RUN_SUPERUSER
+      - RUN_LTH_USERS
     networks:
       - reverse-proxy-net
 
