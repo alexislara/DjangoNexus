@@ -204,6 +204,9 @@ uv run python manage.py createsuperuser
 uv run python manage.py shell
 uv run python manage.py check
 
+# Tests
+uv run python manage.py test apps
+
 # Servidor
 uv run python manage.py runserver                  # 127.0.0.1:8000
 uv run python manage.py runserver 0.0.0.0:8000     # accesible desde la red
@@ -227,8 +230,10 @@ Entre otras cosas, avisa si `SECRET_KEY` sigue siendo el de desarrollo
 
 | Ruta | Qué es |
 |---|---|
-| `/v1/authors/` | CRUD de `Author` |
-| `/v1/libraries/` | CRUD de `Library` |
+| `/v1/authors/` | CRUD de `Author` — ejemplo con la capa `core` |
+| `/v1/libraries/` | CRUD de `Library` — ejemplo con la capa `core` |
+| `/v1/subscriptions/` | CRUD de `Subscription` |
+| `/v1/users/` | datos del usuario de la petición |
 | `/v1/` | raíz de la API (DefaultRouter) |
 | `/admin/` | panel de administración de Django |
 | `/api-authz/login/` | login de la browsable API de DRF (`/logout/` sólo acepta POST) |
@@ -240,7 +245,8 @@ Entre otras cosas, avisa si `SECRET_KEY` sigue siendo el de desarrollo
 ```
 .
 ├── apps/
-│   └── test_app/           # ejemplo funcional de integración con `core`
+│   ├── test_app/           # ejemplo funcional de integración con `core`
+│   └── subscription/       # ejemplo de app real (Subscription, Comment)
 ├── config/
 │   ├── settings/
 │   │   ├── __init__.py     # settings base (lee DJANGO_* del entorno)
@@ -255,6 +261,8 @@ Entre otras cosas, avisa si `SECRET_KEY` sigue siendo el de desarrollo
 ├── entrypoint.sh           # pasos de bootstrap, activados por flags RUN_*
 └── manage.py
 ```
+
+---
 
 ---
 
